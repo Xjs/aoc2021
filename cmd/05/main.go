@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/Xjs/aoc2021/parse"
 )
 
 type point struct {
@@ -18,21 +19,15 @@ type line struct {
 }
 
 func newPoint(s string) (point, error) {
-	ps := strings.Split(s, ",")
+	ps, err := parse.IntList(s)
+	if err != nil {
+		return point{}, err
+	}
 	if len(ps) != 2 {
 		return point{}, fmt.Errorf("invalid point %q, must have syntax x,y", s)
 	}
-	x, err := strconv.Atoi(strings.TrimSpace(ps[0]))
-	if err != nil {
-		return point{}, err
-	}
 
-	y, err := strconv.Atoi(strings.TrimSpace(ps[1]))
-	if err != nil {
-		return point{}, err
-	}
-
-	return point{x, y}, nil
+	return point{ps[0], ps[1]}, nil
 }
 
 func newLine(s string) (line, error) {
