@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Xjs/aoc2021/parse"
+	"github.com/Xjs/aoc2021/part"
 )
 
 type point struct {
@@ -58,11 +59,6 @@ func inc(x1, x2 int) int {
 }
 
 func main() {
-	part1 := true
-	if len(os.Args) > 1 && os.Args[1] == "part2" {
-		part1 = false
-	}
-
 	var lines []line
 
 	s := bufio.NewScanner(os.Stdin)
@@ -97,7 +93,7 @@ func main() {
 	}
 
 	for _, line := range lines {
-		if part1 {
+		if part.One() {
 			if line.p1.x != line.p2.x && line.p1.y != line.p2.y {
 				continue
 			}

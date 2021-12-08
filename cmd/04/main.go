@@ -9,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/Xjs/aoc2021/part"
 )
 
 const Size = 5
@@ -110,11 +112,6 @@ func (b *Board) SumUnmarked() int {
 }
 
 func main() {
-	part1 := true
-	if len(os.Args) > 1 && os.Args[1] == "part2" {
-		part1 = false
-	}
-
 	var inputs []int
 	s := bufio.NewScanner(os.Stdin)
 	if !s.Scan() {
@@ -155,7 +152,7 @@ func main() {
 	for i, input := range inputs {
 		for j, board := range boards {
 			if board.Mark(input) {
-				if part1 {
+				if part.One() {
 					log.Printf("Board %d wins after input %d: %d", j, i, input)
 					fmt.Println(board.String())
 					log.Println(board.SumUnmarked() * input)
