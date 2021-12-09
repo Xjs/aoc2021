@@ -19,3 +19,17 @@ func IntList(s string) ([]int, error) {
 	}
 	return ns, nil
 }
+
+// DigitList takes a string with digits integers and returns the digits as a slice.
+func DigitList(s string) ([]int, error) {
+	ns := make([]int, 0, len(s))
+
+	for _, r := range s {
+		n, err := strconv.Atoi(string(r))
+		if err != nil {
+			return ns, err
+		}
+		ns = append(ns, n)
+	}
+	return ns, nil
+}
