@@ -5,6 +5,7 @@ type Point struct {
 	X, Y uint
 }
 
+// P is a convenience constructor for Point.
 func P(x, y uint) Point {
 	return Point{X: x, Y: y}
 }
