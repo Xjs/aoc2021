@@ -22,9 +22,9 @@ func newPointPriorityQueue() *pointPriorityQueue {
 // Len implements sort.Interface
 func (pq *pointPriorityQueue) Len() int { return len(pq.queue) }
 
-// Less implements sort.Interface (with a greater-than, to invert sort order to make it a priority queue)
+// Less implements sort.Interface
 func (pq *pointPriorityQueue) Less(i, j int) bool {
-	return pq.priority[pq.queue[i]] > pq.priority[pq.queue[j]]
+	return pq.priority[pq.queue[i]] < pq.priority[pq.queue[j]]
 }
 
 // Swap implements sort.Interface
@@ -55,19 +55,15 @@ func (pq *pointPriorityQueue) Pop() interface{} {
 // pop returns the point with lowest priority and its priority.
 func (pq *pointPriorityQueue) pop() (grid.Point, int) {
 	p := heap.Pop(pq).(grid.Point)
-	prio := pq.getPriority(p)
+	prio := pq.priority[p]
 	delete(pq.priority, p)
 	return p, prio
-}
-
-func (pq *pointPriorityQueue) getPriority(item grid.Point) int {
-	return -pq.priority[item]
 }
 
 // decrease modifies the priority and value of a point in the queue only if the priority is lower than the current priority.
 // It returns true if a modification was made.
 func (pq *pointPriorityQueue) decrease(item grid.Point, priority int) bool {
-	oldPrio := pq.getPriority(item)
+	oldPrio := pq.priority[item]
 	if oldPrio < priority {
 		return false
 	}
@@ -77,7 +73,6 @@ func (pq *pointPriorityQueue) decrease(item grid.Point, priority int) bool {
 
 // update modifies the priority and value of an Item in the queue.
 func (pq *pointPriorityQueue) update(item grid.Point, priority int) {
-	priority = -priority
 	pq.priority[item] = priority
 	heap.Fix(pq, pq.indexes[item])
 }
