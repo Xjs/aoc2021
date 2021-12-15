@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"log"
 	"math"
@@ -61,96 +62,73 @@ func main() {
 type pointPriorityQueue struct {
 	queue    []grid.Point
 	priority map[grid.Point]int
+	indexes  map[grid.Point]int
 }
 
-func (q *pointPriorityQueue) addWithPriority(p grid.Point, priority int) {
-	if q.priority == nil {
-		q.priority = make(map[grid.Point]int)
-	}
-
-	q.priority[p] = priority
-	var idx int
-	if priority == math.MaxInt {
-		idx = len(q.queue)
-	} else {
-		idx = q.search(p)
-	}
-
-	// Insert at idx
-	q.queue = append(q.queue, p)
-	if idx < len(q.queue)-1 {
-		copy(q.queue[idx+1:], q.queue[idx:])
-		q.queue[idx] = p
+func newPointPriorityQueue() *pointPriorityQueue {
+	return &pointPriorityQueue{
+		priority: make(map[grid.Point]int),
+		indexes:  make(map[grid.Point]int),
 	}
 }
 
-// search does a binary search for the index at which to insert a point p with a pre-filled priority, or for the index of the concrete point p.
-func (q *pointPriorityQueue) search(p grid.Point) int {
-	if len(q.queue) == 0 {
-		return 0
-	}
+func (pq *pointPriorityQueue) Len() int { return len(pq.queue) }
 
-	min := 0
-	max := len(q.queue)
-	var idx int
-	prio := q.priority[p]
-	for {
-		idx = (max + min) / 2
-		if max == min {
-			break
-		}
-		if q.queue[idx] == p {
-			break
-		}
-
-		if idxPrio := q.priority[q.queue[idx]]; idxPrio < prio {
-			min = idx + 1
-		} else if idxPrio > prio {
-			max = idx
-		} else {
-			for i := min; i < max; i++ {
-				if q.queue[i] == p {
-					return i
-				}
-			}
-		}
-	}
-	return idx
+func (pq *pointPriorityQueue) Less(i, j int) bool {
+	return pq.priority[pq.queue[i]] > pq.priority[pq.queue[j]]
 }
 
-func (q *pointPriorityQueue) decreasePriority(p grid.Point, altPriority int) bool {
-	if q.priority[p] < altPriority {
-		// ignore, we will only decrease
+func (pq *pointPriorityQueue) Swap(i, j int) {
+	pq.queue[i], pq.queue[j] = pq.queue[j], pq.queue[i]
+	pq.indexes[pq.queue[i]] = i
+	pq.indexes[pq.queue[j]] = j
+}
+
+func (pq *pointPriorityQueue) Push(x interface{}) {
+	n := len(pq.queue)
+	item := x.(grid.Point)
+	pq.indexes[item] = n
+	pq.queue = append(pq.queue, item)
+}
+
+func (pq *pointPriorityQueue) Pop() interface{} {
+	old := pq.queue
+	n := len(old)
+	item := old[n-1]
+	delete(pq.indexes, item)
+	pq.queue = old[0 : n-1]
+	return item
+}
+
+func (pq *pointPriorityQueue) pop() (grid.Point, int) {
+	p := heap.Pop(pq).(grid.Point)
+	prio := pq.priority[p]
+	delete(pq.priority, p)
+	return p, -prio
+}
+
+// decrease modifies the priority and value of an Item in the queue only if it is a decrease.
+func (pq *pointPriorityQueue) decrease(item grid.Point, priority int) bool {
+	oldPrio := pq.priority[item]
+	if oldPrio > priority {
 		return false
 	}
-
-	idx := q.search(p)
-
-	// precondition: q.queue[idx] == p
-	for i := idx - 1; i > 0 && q.priority[q.queue[i]] > altPriority; i-- {
-		q.queue[i+1], q.queue[i] = q.queue[i], q.queue[i+1]
-	}
-	q.priority[p] = altPriority
+	pq.update(item, priority)
 	return true
 }
 
-func (q *pointPriorityQueue) extractMin() (grid.Point, int) {
-	var p grid.Point
-	p, q.queue = q.queue[0], q.queue[1:]
-	prio := q.priority[p]
-	delete(q.priority, p)
-	return p, prio
-}
-
-func (q *pointPriorityQueue) length() int {
-	return len(q.queue)
+// update modifies the priority and value of an Item in the queue.
+func (pq *pointPriorityQueue) update(item grid.Point, priority int) {
+	pq.priority[item] = priority
+	heap.Fix(pq, pq.indexes[item])
 }
 
 func dijkstra(g integer.Grid, start, end grid.Point) []grid.Point {
 	// tentative := integer.NewGrid(g.Width(), g.Height())
 	// unvisited := make(map[grid.Point]struct{})
-	tentativeQueue := new(pointPriorityQueue)
-	tentativeQueue.addWithPriority(start, 0)
+	tentativeQueue := newPointPriorityQueue()
+	heap.Push(tentativeQueue, start)
+	tentativeQueue.update(start, 0)
 
 	for x := uint(0); x < g.Width(); x++ {
 		for y := uint(0); y < g.Height(); y++ {
@@ -159,21 +137,25 @@ func dijkstra(g integer.Grid, start, end grid.Point) []grid.Point {
 			if p == start {
 				continue
 			}
-			tentativeQueue.addWithPriority(p, math.MaxInt)
+			heap.Push(tentativeQueue, p)
+			tentativeQueue.update(p, -math.MaxInt)
 		}
 	}
+
+	heap.Init(tentativeQueue)
 
 	predecessors := make(map[grid.Point]grid.Point)
 
 	iter := 0
 	for {
-		if tentativeQueue.length() == 0 {
+		if tentativeQueue.Len() == 0 {
 			break
 		}
 
 		iter++
 
-		current, curDist := tentativeQueue.extractMin()
+		current, curDist := tentativeQueue.pop()
+
 		if current == end {
 			break
 		}
@@ -184,7 +166,7 @@ func dijkstra(g integer.Grid, start, end grid.Point) []grid.Point {
 
 		for _, p := range g.Environment4(current) {
 			dist := curDist + g.MustAt(p)
-			if tentativeQueue.decreasePriority(p, dist) {
+			if tentativeQueue.decrease(p, -dist) {
 				predecessors[p] = current
 			}
 		}
