@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/Xjs/aoc2021/integer/grid"
 	"github.com/Xjs/aoc2021/parse"
@@ -163,4 +164,39 @@ func (g *Grid) MustSet(p grid.Point, v int) {
 	if err := g.Set(p, v); err != nil {
 		panic(err)
 	}
+}
+
+// String creates a multi-line string from the grid.
+func (g Grid) String() string {
+	var b strings.Builder
+	max := 0
+	for x := uint(0); x < g.width; x++ {
+		for y := uint(0); y < g.height; y++ {
+			if v := g.MustAt(grid.P(x, y)); v > max {
+				max = v
+			}
+		}
+	}
+
+	l := len(fmt.Sprint(max))
+	sep := ""
+	fill := ' '
+	if l > 1 {
+		sep = " "
+	}
+
+	for x := uint(0); x < g.width; x++ {
+		for y := uint(0); y < g.height; y++ {
+			v := g.MustAt(grid.P(x, y))
+			rep := fmt.Sprint(v)
+			for i := 0; i < l-len(rep); i++ {
+				b.WriteRune(fill)
+			}
+			b.WriteString(rep)
+			b.WriteString(sep)
+		}
+		b.WriteRune('\n')
+	}
+
+	return b.String()
 }
