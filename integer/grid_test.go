@@ -59,6 +59,10 @@ func TestGrid_Environment8(t *testing.T) {
 			grid.P(4, 5), grid.P(6, 5), grid.P(5, 4), grid.P(5, 6),
 			grid.P(4, 4), grid.P(6, 6), grid.P(4, 6), grid.P(6, 4)},
 		},
+		{"regular", fields{42, 42, nil}, args{grid.P(10, 5)}, []grid.Point{
+			grid.P(9, 5), grid.P(11, 5), grid.P(10, 4), grid.P(10, 6),
+			grid.P(9, 4), grid.P(11, 6), grid.P(9, 6), grid.P(11, 4)},
+		},
 		{"lower bound", fields{42, 42, nil}, args{grid.P(0, 0)}, []grid.Point{grid.P(1, 0), grid.P(0, 1), grid.P(1, 1)}},
 		{"upper bound", fields{42, 42, nil}, args{grid.P(41, 41)}, []grid.Point{grid.P(40, 41), grid.P(41, 40), grid.P(40, 40)}},
 		{"edge top", fields{42, 42, nil}, args{grid.P(5, 0)}, []grid.Point{

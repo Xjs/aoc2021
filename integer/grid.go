@@ -185,8 +185,8 @@ func (g Grid) String() string {
 		sep = " "
 	}
 
-	for x := uint(0); x < g.width; x++ {
-		for y := uint(0); y < g.height; y++ {
+	for y := uint(0); y < g.height; y++ {
+		for x := uint(0); x < g.width; x++ {
 			v := g.MustAt(grid.P(x, y))
 			rep := fmt.Sprint(v)
 			for i := 0; i < l-len(rep); i++ {
@@ -199,4 +199,13 @@ func (g Grid) String() string {
 	}
 
 	return b.String()
+}
+
+// Foreach calls f exactly once for each point in g.
+func (g *Grid) Foreach(f func(p grid.Point)) {
+	for x := uint(0); x < g.Width(); x++ {
+		for y := uint(0); y < g.Height(); y++ {
+			f(grid.P(x, y))
+		}
+	}
 }
