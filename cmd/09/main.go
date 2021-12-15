@@ -6,37 +6,22 @@ import (
 	"log"
 	"os"
 
+	"github.com/Xjs/aoc2021/integer"
+	"github.com/Xjs/aoc2021/integer/grid"
 	"github.com/Xjs/aoc2021/parse"
 	"github.com/Xjs/aoc2021/part"
 )
 
-type grid struct {
-	width, height int
-	values        [][]int
-}
-
-type point struct {
-	x, y int
-}
-
-func newGrid(w, h int) grid {
-	g := grid{width: w, height: h, values: make([][]int, h)}
-	for i := 0; i < h; i++ {
-		g.values[i] = make([]int, w)
-	}
-	return g
-}
-
-func fill(source, target grid, p point, id int) {
-	if target.at(p) != 0 {
+func fill(source, target integer.Grid, p grid.Point, id int) {
+	if target.MustAt(p) != 0 {
 		return
 	}
-	if source.at(p) == 9 {
-		target.values[p.y][p.x] = 9
+	if source.MustAt(p) == 9 {
+		(&target).MustSet(p, 9)
 		return
 	}
-	target.values[p.y][p.x] = id
-	for _, p := range target.environment(p) {
+	(&target).MustSet(p, id)
+	for _, p := range target.Environment4(p) {
 		fill(source, target, p, id)
 	}
 }
@@ -45,15 +30,16 @@ func fill(source, target grid, p point, id int) {
 // to this point and don't have a 9 in the source with the number id.
 // Pixels with a 9 will become a 9 in the target.
 // It returns false if no zero was found.
-func fillAOC(source, target grid, id int) bool {
-	if source.width != target.width || source.height != target.height {
+func fillAOC(source, target integer.Grid, id int) bool {
+	if source.Width() != target.Width() || source.Height() != target.Height() {
 		panic("sizes don't match")
 	}
 
-	for x := 0; x < source.width; x++ {
-		for y := 0; y < source.height; y++ {
-			if target.values[y][x] == 0 {
-				fill(source, target, point{x, y}, id)
+	for x := uint(0); x < source.Width(); x++ {
+		for y := uint(0); y < source.Height(); y++ {
+			p := grid.P(x, y)
+			if target.MustAt(p) == 0 {
+				fill(source, target, p, id)
 				return true
 			}
 		}
@@ -64,38 +50,13 @@ func fillAOC(source, target grid, id int) bool {
 
 // fillAllAOC returns a grid where all connected areas are filled with the same number != 9,
 // and all 9s are kept as-is.
-func fillAllAOC(source grid) grid {
+func fillAllAOC(source integer.Grid) integer.Grid {
 	id := 10
-	target := newGrid(source.width, source.height)
+	target := integer.NewGrid(source.Width(), source.Height())
 	for fillAOC(source, target, id) {
 		id++
 	}
 	return target
-}
-
-func (g grid) at(p point) int {
-	if p.y >= g.height || p.x >= g.width {
-		panic(p)
-	}
-	return g.values[p.y][p.x]
-}
-
-func (g grid) environment(p point) []point {
-	x, y := p.x, p.y
-	result := make([]point, 0, 4)
-	if x > 0 {
-		result = append(result, point{x - 1, y})
-	}
-	if x < g.width-1 {
-		result = append(result, point{x + 1, y})
-	}
-	if y > 0 {
-		result = append(result, point{x, y - 1})
-	}
-	if y < g.height-1 {
-		result = append(result, point{x, y + 1})
-	}
-	return result
 }
 
 func main() {
@@ -112,22 +73,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	g := grid{values: depths}
-	if len(depths) > 0 {
-		g.width = len(depths[0])
+	g, err := integer.GridFrom(depths)
+	if err != nil {
+		log.Fatal(err)
 	}
-	g.height = len(depths)
 
-	minima := make([]point, 0)
+	minima := make([]grid.Point, 0)
 
 	if part.One() {
-		for y := 0; y < g.height; y++ {
-			for x := 0; x < g.width; x++ {
-				v := g.values[y][x]
+		for y := uint(0); y < g.Height(); y++ {
+			for x := uint(0); x < g.Width(); x++ {
+				p := grid.P(x, y)
+				v := g.MustAt(p)
 				smallest := true
 
-				for _, p2 := range g.environment(point{x, y}) {
-					v2 := g.at(p2)
+				for _, p2 := range g.Environment4(p) {
+					v2 := g.MustAt(p2)
 					if v2 < v {
 						smallest = false
 						break
@@ -137,21 +98,26 @@ func main() {
 					continue
 				}
 
-				minima = append(minima, point{x, y})
+				minima = append(minima, p)
 			}
 		}
 
+		var risk int
 		for _, minimum := range minima {
-			fmt.Println(minimum.x, minimum.y, "->", g.values[minimum.y][minimum.x])
+			v := g.MustAt(minimum)
+			fmt.Println(minimum.X, minimum.Y, "->", v)
+			risk += (v + 1)
 		}
+
+		fmt.Println("Risk:", risk)
 		return
 	}
 
 	areas := fillAllAOC(g)
 	hist := make(map[int]int)
-	for y := 0; y < g.height; y++ {
-		for x := 0; x < g.width; x++ {
-			hist[areas.values[y][x]]++
+	for y := uint(0); y < g.Height(); y++ {
+		for x := uint(0); x < g.Width(); x++ {
+			hist[areas.MustAt(grid.P(x, y))]++
 		}
 	}
 
