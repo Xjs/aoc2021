@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/Xjs/aoc2021/integer"
 	"github.com/Xjs/aoc2021/integer/grid"
-	"github.com/Xjs/aoc2021/parse"
 	"github.com/Xjs/aoc2021/part"
 )
 
@@ -60,22 +58,12 @@ func fillAllAOC(source integer.Grid) integer.Grid {
 }
 
 func main() {
-	var depths [][]int
-	s := bufio.NewScanner(os.Stdin)
-	for s.Scan() {
-		ds, err := parse.DigitList(s.Text())
-		if err != nil {
-			log.Fatal(err)
-		}
-		depths = append(depths, ds)
-	}
-	if err := s.Err(); err != nil {
-		log.Fatal(err)
-	}
+	var g integer.Grid
 
-	g, err := integer.GridFrom(depths)
-	if err != nil {
+	if gg, err := integer.ReadGrid(os.Stdin); err != nil {
 		log.Fatal(err)
+	} else {
+		g = *gg
 	}
 
 	minima := make([]grid.Point, 0)
@@ -89,7 +77,7 @@ func main() {
 
 				for _, p2 := range g.Environment4(p) {
 					v2 := g.MustAt(p2)
-					if v2 < v {
+					if v2 <= v {
 						smallest = false
 						break
 					}

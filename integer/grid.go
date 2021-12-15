@@ -1,10 +1,13 @@
 package integer
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/Xjs/aoc2021/integer/grid"
+	"github.com/Xjs/aoc2021/parse"
 )
 
 // ulen is a convenience function that returns the length of an int
@@ -53,6 +56,26 @@ func GridFrom(values [][]int) (Grid, error) {
 	}
 
 	return g, nil
+}
+
+// ReadGrid reads digit lists from r until EOF is encountered,
+// and creates a grid from them.
+func ReadGrid(r io.Reader) (*Grid, error) {
+	var values [][]int
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		ds, err := parse.DigitList(s.Text())
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, ds)
+	}
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
+
+	g, err := GridFrom(values)
+	return &g, err
 }
 
 // ErrOutOfBounds is returned by At and Set if an out-of-bounds coordinate is accessed.
